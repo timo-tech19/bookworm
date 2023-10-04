@@ -1,3 +1,5 @@
 module github.com/timotech-19/bookworm
 
 go 1.21.1
+
+require github.com/gorilla/mux v1.8.0 // indirect

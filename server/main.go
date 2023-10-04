@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"github.com/timotech-19/bookworm/routes"
+)
 
 func main() {
-	fmt.Println("Hello World!")
+	h := routes.NewHandler()
+
+	h.Serve()
 }
