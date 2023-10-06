@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/timotech-19/bookworm/routes/auth"
 )
 
 type Handler struct {
@@ -35,12 +36,21 @@ func NewHandler() *Handler {
 	return h
 }
 
+func hello(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hello World!")
+}
+
 // Maps api routes to appropriate handler functions
 func (h *Handler) mapRoutes() {
 	// This route checks if the server is up and running
 	h.Router.HandleFunc("/alive", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Server is still alive")
 	})
+
+	h.Router.HandleFunc("/sign-up", auth.Signup).Methods("POST")
+	h.Router.HandleFunc("/sign-in", auth.Signin).Methods("GET")
+
+	h.Router.HandleFunc("/", auth.Protect(hello)).Methods("GET")
 }
 
 // Starts up server.
