@@ -1,4 +1,5 @@
 ![Bookworm](bookworm.png)
+
 Keep track of your books and build healthy reading habits.
 
 A backend API written in Go for managing booklists
@@ -11,6 +12,8 @@ A backend API written in Go for managing booklists
 - Delete books for reading list
 
 ## Packages used
- - Gin
- - Gorm
+
+- Gin
+- Gorm
+
 More info coming soon...
