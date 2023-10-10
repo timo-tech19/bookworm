@@ -10,4 +10,7 @@ A backend API written in Go for managing booklists
 - Update books(reading status)
 - Delete books for reading list
 
+## Packages used
+ - Gin
+ - Gorm
 More info coming soon...
