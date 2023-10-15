@@ -2,6 +2,7 @@ package database
 
 import "gorm.io/gorm"
 
+// Represents user data in database
 type Book struct {
 	gorm.Model
 	Title  string

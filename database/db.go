@@ -9,6 +9,7 @@ import (
 
 var DB *gorm.DB
 
+// creates a connection to the database
 func InitDB() {
 	var err error
 	dsn := os.Getenv("DB_URL")
@@ -19,6 +20,7 @@ func InitDB() {
 	}
 }
 
+// Migrates changes in table definition to database
 func MigrateDB() {
 	err := DB.AutoMigrate(User{}, Book{})
 

@@ -8,6 +8,7 @@ import (
 	db "github.com/timotech-19/bookworm/database"
 )
 
+// Represents book data expected from request
 type BookJSON struct {
 	Title  string
 	Author string
@@ -15,6 +16,7 @@ type BookJSON struct {
 	Genre  string
 }
 
+// Represent book data sent to client
 type BookResponse struct {
 	ID        uint      `json:"id"`
 	Title     string    `json:"title"`
@@ -26,6 +28,7 @@ type BookResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// Creates a new book resource
 func CreateBook(c *gin.Context) {
 	var body BookJSON
 	if err := c.Bind(&body); err != nil {

@@ -13,17 +13,14 @@ import (
 	"gorm.io/gorm"
 )
 
+// Represents user info expected from client
 type UserInfo struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type JWTClaims struct {
-	UserId int `json:"user_id"`
-	jwt.RegisteredClaims
-}
-
+// Creates and authenticate new users in app
 func Signup(c *gin.Context) {
 	// get user data
 	var body UserInfo
@@ -61,6 +58,7 @@ func Signup(c *gin.Context) {
 	})
 }
 
+// Authenicate users in app
 func Signin(c *gin.Context) {
 	// get user data
 	var body UserInfo
@@ -99,6 +97,7 @@ func Signin(c *gin.Context) {
 
 // Prevent users from accessing routes when unauthenicated.
 func Protect(c *gin.Context) {
+	// get token from cookie
 	token, err := c.Cookie("Authorization")
 	if err == http.ErrNoCookie {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -107,8 +106,8 @@ func Protect(c *gin.Context) {
 		return
 	}
 
+	// parse token
 	key := []byte(os.Getenv("JWT_SECRET"))
-
 	tkn, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("Could not validate auth token")
@@ -143,7 +142,7 @@ func Protect(c *gin.Context) {
 			return
 		}
 
-		// set user on req
+		// set authenticated user on gin context
 		c.Set("user", user)
 
 		c.Next()
@@ -155,7 +154,7 @@ func Protect(c *gin.Context) {
 	}
 }
 
-// creates a jwt token for user
+// sends a newly created jwt token to client via cookies
 func sendToken(c *gin.Context, user db.User) {
 	// creates a token struct with claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -163,9 +162,9 @@ func sendToken(c *gin.Context, user db.User) {
 		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 30 days
 	})
 
+	// sign token
 	key := []byte(os.Getenv("JWT_SECRET"))
 	tokenString, err := token.SignedString(key)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to create token",
@@ -173,7 +172,7 @@ func sendToken(c *gin.Context, user db.User) {
 		return
 	}
 
-	// send cookie
+	// send token as cookie
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("Authorization", tokenString, 3600*24*30, "", "", false, true)
 }
