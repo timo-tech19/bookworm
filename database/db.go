@@ -20,5 +20,9 @@ func InitDB() {
 }
 
 func MigrateDB() {
-	DB.AutoMigrate(User{})
+	err := DB.AutoMigrate(User{}, Book{})
+
+	if err != nil {
+		panic(err)
+	}
 }

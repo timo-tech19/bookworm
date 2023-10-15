@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/timotech-19/bookworm/controllers/auth"
+	"github.com/timotech-19/bookworm/controllers/book"
 	db "github.com/timotech-19/bookworm/database"
 )
 
@@ -28,6 +29,8 @@ func main() {
 	r.GET("/hello", auth.Protect, func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "Hello World!"})
 	})
+
+	r.POST("/book", auth.Protect, book.CreateBook)
 
 	r.Run()
 }

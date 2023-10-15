@@ -19,6 +19,11 @@ type UserInfo struct {
 	Password string `json:"password"`
 }
 
+type JWTClaims struct {
+	UserId int `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
 func Signup(c *gin.Context) {
 	// get user data
 	var body UserInfo
@@ -45,7 +50,6 @@ func Signup(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create user",
 		})
-
 		return
 	}
 
@@ -103,15 +107,52 @@ func Protect(c *gin.Context) {
 		return
 	}
 
-	isValid := validateToken(token)
-	if !isValid {
+	key := []byte(os.Getenv("JWT_SECRET"))
+
+	tkn, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("Could not validate auth token")
+		}
+
+		return key, nil
+	})
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "User is not logged in",
 		})
 		return
 	}
 
-	c.Next()
+	if claims, ok := tkn.Claims.(jwt.MapClaims); ok && tkn.Valid {
+		// check token expired
+		if float64(time.Now().Unix()) > claims["exp"].(float64) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "User is not logged in",
+			})
+			return
+		}
+
+		// get user
+		var user db.User
+		result := db.DB.Where("id = ?", claims["sub"]).First(&user)
+
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "User is not logged in",
+			})
+			return
+		}
+
+		// set user on req
+		c.Set("user", user)
+
+		c.Next()
+	} else {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "User is not logged in",
+		})
+		return
+	}
 }
 
 // creates a jwt token for user
@@ -119,7 +160,7 @@ func sendToken(c *gin.Context, user db.User) {
 	// creates a token struct with claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.ID,
-		"ext": time.Now().Add(time.Hour * 24 * 30).Unix(), // 30 days
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // 30 days
 	})
 
 	key := []byte(os.Getenv("JWT_SECRET"))
@@ -136,34 +177,3 @@ func sendToken(c *gin.Context, user db.User) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("Authorization", tokenString, 3600*24*30, "", "", false, true)
 }
-
-// Verifies if jwt token is valid
-func validateToken(tokenString string) bool {
-	key := []byte(os.Getenv("JWT_SECRET"))
-
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("Could not validate auth token")
-		}
-
-		return key, nil
-	})
-
-	if err != nil {
-		return false
-	}
-
-	return token.Valid
-}
-
-// // configures and set token cookies to be sent to client
-// func setTokenCookie(w http.ResponseWriter, token string) {
-// 	cookie := http.Cookie{
-// 		Name:     "token",
-// 		Value:    token,
-// 		Expires:  time.Now().Add(90 * 24 * time.Hour), // 90days
-// 		HttpOnly: true,
-// 	}
-
-// 	http.SetCookie(w, &cookie)
-// }
