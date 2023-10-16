@@ -30,7 +30,11 @@ func main() {
 		c.JSON(200, gin.H{"message": "Hello World!"})
 	})
 
-	r.POST("/book", auth.Protect, book.CreateBook)
+	r.POST("/books", auth.Protect, book.CreateBook)
+	r.GET("/books", auth.Protect, book.GetUserBooks)
+	r.GET("/books/:id", auth.Protect, book.GetBook)
+	r.PUT("/books/:id", auth.Protect, book.UpdateBook)
+	r.DELETE("/books/:id", auth.Protect, book.DeleteBook)
 
 	r.Run()
 }
